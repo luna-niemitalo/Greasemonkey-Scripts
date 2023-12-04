@@ -31,6 +31,7 @@
     // Function to set the value of valid elements
     function setElementValue(element, value) {
         element.value = value;
+        element.setAttribute('value',value);
     }
 
     // Function to be executed when the DOM is updated
