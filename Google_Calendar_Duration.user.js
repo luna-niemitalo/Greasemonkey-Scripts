@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Google Calendar Duration
+// @name         Google Calendar Duration (Discontinued / not working)
 // @namespace    http://example/greasemonkey
-// @version      1
+// @version      1.1
 // @description  Script to show duration in google calendar
 // @match        https://calendar.google.com/*
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js

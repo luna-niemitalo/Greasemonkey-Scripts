@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name     H&M Sort by largest discount
-// @version  1
+// @name     H&M Sort by largest discount (Discontinued / not working)
+// @version  1.1
 // @match        https://www2.hm.com/*
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js
 // @grant    none
