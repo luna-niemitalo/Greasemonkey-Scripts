@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         FlexHRM filler
-// @version      1.0
+// @version      1.1
 // @description  Sets the value of valid elements to project on DOM updates after the page has loaded
 // @author       Luna
 // @match        https://aspia2.flexhosting.se/*
