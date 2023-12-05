@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         FlexHRM filler
-// @version      1.1
+// @version      1.2
 // @description  Sets the value of valid elements to project on DOM updates after the page has loaded
 // @author       Luna
 // @match        https://aspia2.flexhosting.se/*
@@ -32,6 +32,8 @@
     function setElementValue(element, value) {
         element.value = value;
         element.setAttribute('value',value);
+        element.setAttribute('title',value);
+        element.setAttribute('data-parsed', 'parsed');
     }
 
     // Function to be executed when the DOM is updated
