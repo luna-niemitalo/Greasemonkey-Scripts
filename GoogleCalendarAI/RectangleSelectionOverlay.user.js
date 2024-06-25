@@ -31,20 +31,20 @@ const systemMessage = `
     {
         "summary": <String formatted event title>,
         "location": <String formatted real world location, including country>,
-        "description": <Markdown formatted event description>,
+        "description": <HTML formatted event description, limit 8000 characters, try to use as much of the limit as you can, also when some information is a link to external page, try to preserve that so the link works even while formattng the text around it>,
         "start": {
-            "dateTime": <iso formatted start time>,
-            "timeZone": <Timezone of the start time, Finland/Helsinki, unless otherwise specified in the data>,
+            "dateTime": <iso formatted start time from when you can get into the event example: 2021-06-29T18:00:00>,
+            "timeZone": <Timezone of the start time, Europe/Helsinki, unless otherwise specified in the data>,
         },
         "end": {
-            "dateTime": <iso formatted end time>,
-            "timeZone": <Timezone of the end time, Finland/Helsinki, unless otherwise specified in the data>,
+            "dateTime": <iso formatted end time of when all the stuff in the event has concluded example: 2021-06-29T18:00:00>,
+            "timeZone": <Timezone of the end time, Europe/Helsinki, unless otherwise specified in the data>,
         }
     }
 `;
 const styles = `
     #overlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.1); z-index: 9999;
     }
     .selection-rectangle {
@@ -144,6 +144,7 @@ async function createEvent(eventProp) {
             body: eventProp
         });
         const event = await response.json();
+        console.debug(event);
         return response.ok ? `Event created: ${event.htmlLink}` : `Error: ${event.error.message}`;
     } catch (error) {
         return `An error occurred: ${error}`;
@@ -155,7 +156,7 @@ async function queryAi(data) {
     if (!credentials.OpenAI_key) return;
     const url = "https://api.openai.com/v1/chat/completions";
     const requestBody = {
-        model: "gpt-3.5-turbo-0125",
+        model: "gpt-4o",
         messages: [
             { role: "system", content: systemMessage },
             { role: "user", content: data }
@@ -193,10 +194,11 @@ function addOverlay() {
     ol.addEventListener('mouseup', endDrawing);
     overlay = ol;
 }
+
 function startDrawing(event) {
     isDrawing = true;
-    startX = event.pageX;
-    startY = event.pageY;
+    startX = event.clientX; // Use clientX instead of pageX
+    startY = event.clientY; // Use clientY instead of pageY
     const r = document.createElement('div');
     r.className = 'selection-rectangle';
     r.style.left = `${startX}px`;
@@ -204,39 +206,60 @@ function startDrawing(event) {
     overlay.appendChild(r);
     rect = r;
 }
+
 function draw(event) {
     if (!isDrawing) return;
-    const x = Math.min(event.pageX, startX);
-    const y = Math.min(event.pageY, startY);
-    const width = Math.abs(event.pageX - startX);
-    const height = Math.abs(event.pageY - startY);
+    const x = Math.min(event.clientX, startX); // Use clientX instead of pageX
+    const y = Math.min(event.clientY, startY); // Use clientY instead of pageY
+    const width = Math.abs(event.clientX - startX);
+    const height = Math.abs(event.clientY - startY);
     rect.style.left = `${x}px`;
     rect.style.top = `${y}px`;
     rect.style.width = `${width}px`;
     rect.style.height = `${height}px`;
 }
+
+function getTextsFromValidElements(element, rectBounds, depth = 0) {
+    if (depth !== 0) {
+        const hasChildren = element.childNodes.length > 0;
+        if (element.tagName === 'A') {
+            return [element.outerHTML];
+            return [convertToMarkdown(element.textContent, element.href)];
+        }
+        if (!hasChildren) {
+            return element.textContent.trim().length > 0 ? [element.textContent.trim()] : [];
+        }
+    }
+    if (typeof element.getBoundingClientRect !== 'function') {
+        return [];
+    }
+
+    const elBounds = element.getBoundingClientRect();
+    if (elBounds.left > rectBounds.right || elBounds.right < rectBounds.left ||
+      elBounds.top > rectBounds.bottom || elBounds.bottom < rectBounds.top) {
+        return [];
+    }
+
+
+
+    const children = Array.from(element.childNodes);
+    return children.flatMap(child => getTextsFromValidElements(child, rectBounds, depth + 1));
+}
 function endDrawing() {
     isDrawing = false;
     const rectBounds = rect.getBoundingClientRect();
+    console.table(rectBounds);
     const elements = Array.from(document.body.getElementsByTagName("*"));
-    const selectedElements = elements.filter(element => {
-        const elBounds = element.getBoundingClientRect();
-        const hasText = element.childNodes.length === 1 && element.childNodes[0].nodeType === Node.TEXT_NODE && element.textContent.trim().length > 0;
-        return hasText &&
-            elBounds.left < rectBounds.right &&
-            elBounds.right > rectBounds.left &&
-            elBounds.top < rectBounds.bottom &&
-            elBounds.bottom > rectBounds.top;
-    });
-
-    const text = selectedElements.map(element => {
-        let result = element.textContent;
-        if (element.tagName === 'A') result = convertToMarkdown(result, element.href);
-        return result;
-    });
-
-    pageResults = text.join('\n');
+    let selectedElements = elements.flatMap(element => getTextsFromValidElements(element, rectBounds));
+    const set = new Set(selectedElements);
+    pageResults = Array.from(set).join('\n');
     console.debug(pageResults);
+    const sure = confirm('Do you want to proceed with the following data?\n' + pageResults);
+    if (!sure) {
+        overlay.remove();
+        return;
+    }
+
     queryAi(pageResults).then(aiResult => {
         console.info(aiResult);
         createEvent(aiResult).then(eventResult => createPopupNotification(eventResult));
@@ -288,6 +311,7 @@ class ApiKeyManager {
     document.head.appendChild(styleSheet);
     document.addEventListener('keydown', function(event) {
         if (event.ctrlKey && event.shiftKey && event.key === 'X') {
+
             getTokensAndAuthenticate().then(authenticated => {
                 if (authenticated) {
                     userPrompted = false;
@@ -296,5 +320,6 @@ class ApiKeyManager {
                 addOverlay();
             });
         }
+        if (event.key === 'Escape') overlay?.remove();
     });
 })();
