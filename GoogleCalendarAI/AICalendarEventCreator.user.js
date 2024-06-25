@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Rectangle Selection Overlay
+// @name         AI Calendar Event Creator
 // @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  Draw a rectangle to select DOM elements
+// @version      1.0
+// @description  Draw a rectangle to select DOM elements and then use OpenAI API and Google Calendar API to create calendar events
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
 // @author       Luna
 // @match        *://*/*
@@ -269,7 +269,8 @@ function endDrawing() {
 
 class ApiKeyManager {
     constructor() {
-        this.encryptionKey = "Top4kek555";
+        // TODO Change this, or prompt for it
+        this.encryptionKey = "0000";
         return;
         this.encryptionKey = prompt("Enter encryption key: \n Warning, if this is your first time running this script, you will be prompted for several API keys in succession.");
         userPrompted = true;
