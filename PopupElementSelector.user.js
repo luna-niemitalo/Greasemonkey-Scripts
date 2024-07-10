@@ -1,6 +1,14 @@
-// popup.js
+// ==UserScript==
+// @name         Popup Element Selector
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  Draw a rectangle to select DOM elements and then use OpenAI API and Google Calendar API to create calendar events
+// @author       Luna
+// @match        *://*/*
+// ==/UserScript==
 
 (function() {
+    console.log("Popup Initialized");
     let globalAction = null;
 
     // Function to set the global action
@@ -27,8 +35,8 @@
     const slideButton = document.createElement('button');
     slideButton.textContent = 'Slide In/Out';
     slideButton.style.position = 'absolute';
-    slideButton.style.left = '-100px';
-    slideButton.style.top = '50%';
+    slideButton.style.right = -0;
+    slideButton.style.top = 93%;
     slideButton.style.transform = 'translateY(-50%)';
     slideButton.onclick = () => {
         if (popup.style.right === '0px') {
@@ -37,7 +45,7 @@
             popup.style.right = '0px';
         }
     };
-    document.body.appendChild(slideButton);
+    popup.appendChild(slideButton);
 
     // Text box
     const textBox = document.createElement('input');
